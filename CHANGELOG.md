@@ -2,7 +2,12 @@
 
 ## Unreleased
 
-- *Features for next release*
+### Misc. Updates
+
+- Model updates for the following services
+  - **Breaking Change** Amazon EC2 - reverted a change that was mistakenly released in the previous model update
+  - **Breaking Change** Amazon Elastic Load Balancing - updated to API version `2015-12-01`
+  - **Breaking Change** Amazon Simple Email Service - updated to API version `2019-09-27`
 
 ## 2.15.3
 

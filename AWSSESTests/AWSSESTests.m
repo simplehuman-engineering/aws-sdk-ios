@@ -51,18 +51,10 @@
     AWSSES *ses = [AWSSES defaultSES];
     XCTAssertNotNil(ses);
 
-    [[[ses getSendQuota:[AWSRequest new]] continueWithBlock:^id(AWSTask *task) {
-        if (task.error) {
-            XCTFail(@"Error: [%@]", task.error);
-        }
-
-        if (task.result) {
-            XCTAssertTrue([task.result isKindOfClass:[AWSSESGetSendQuotaResponse class]]);
-            AWSSESGetSendQuotaResponse *getSendQuotaResponse = task.result;
-            XCTAssertTrue(getSendQuotaResponse.max24HourSend > 0);
-            XCTAssertTrue(getSendQuotaResponse.maxSendRate > 0);
-        }
-
+    AWSSESGetBlacklistReportsRequest *request = [AWSSESGetBlacklistReportsRequest new];
+    [[[ses getBlacklistReports:request] continueWithBlock:^id(AWSTask *task) {
+        XCTAssertNil(task.error);
+        XCTAssertNotNil(task.result);
         return nil;
     }] waitUntilFinished];
 
@@ -70,40 +62,40 @@
 }
 #endif
 
-- (void)testGetSendQuota {
-    AWSSES *ses = [AWSSES defaultSES];
-
-    [[[ses getSendQuota:[AWSRequest new]] continueWithBlock:^id(AWSTask *task) {
-        if (task.error) {
-            XCTFail(@"Error: [%@]", task.error);
-        }
-
-        if (task.result) {
-            XCTAssertTrue([task.result isKindOfClass:[AWSSESGetSendQuotaResponse class]]);
-            AWSSESGetSendQuotaResponse *getSendQuotaResponse = task.result;
-            XCTAssertTrue(getSendQuotaResponse.max24HourSend > 0);
-            XCTAssertTrue(getSendQuotaResponse.maxSendRate > 0);
-        }
-
-        return nil;
-    }] waitUntilFinished];
-}
-
-- (void)testVerifyEmailIdentityFailed {
-    AWSSES *ses = [AWSSES defaultSES];
-
-    AWSSESVerifyEmailIdentityRequest *identityRequest = [AWSSESVerifyEmailIdentityRequest new];
-    identityRequest.emailAddress = @""; //email address is empty
-
-    [[[ses verifyEmailIdentity:identityRequest] continueWithBlock:^id(AWSTask *task) {
-        XCTAssertNotNil(task.error, @"expected InvalidParameterValue Error but got nil");
-        XCTAssertEqualObjects(task.error.domain, AWSSESErrorDomain);
-        XCTAssertEqual(task.error.code, AWSSESErrorUnknown);
-        XCTAssertTrue([@"InvalidParameterValue" isEqualToString:task.error.userInfo[@"Code"]]);
-        XCTAssertTrue([@"Email address not specified." isEqualToString:task.error.userInfo[@"Message"]]);
-        return nil;
-    }] waitUntilFinished];
-}
+//- (void)testGetSendQuota {
+//    AWSSES *ses = [AWSSES defaultSES];
+//
+//    [[[ses getSendQuota:[AWSRequest new]] continueWithBlock:^id(AWSTask *task) {
+//        if (task.error) {
+//            XCTFail(@"Error: [%@]", task.error);
+//        }
+//
+//        if (task.result) {
+//            XCTAssertTrue([task.result isKindOfClass:[AWSSESGetSendQuotaResponse class]]);
+//            AWSSESGetSendQuotaResponse *getSendQuotaResponse = task.result;
+//            XCTAssertTrue(getSendQuotaResponse.max24HourSend > 0);
+//            XCTAssertTrue(getSendQuotaResponse.maxSendRate > 0);
+//        }
+//
+//        return nil;
+//    }] waitUntilFinished];
+//}
+//
+//- (void)testVerifyEmailIdentityFailed {
+//    AWSSES *ses = [AWSSES defaultSES];
+//
+//    AWSSESVerifyEmailIdentityRequest *identityRequest = [AWSSESVerifyEmailIdentityRequest new];
+//    identityRequest.emailAddress = @""; //email address is empty
+//
+//    [[[ses verifyEmailIdentity:identityRequest] continueWithBlock:^id(AWSTask *task) {
+//        XCTAssertNotNil(task.error, @"expected InvalidParameterValue Error but got nil");
+//        XCTAssertEqualObjects(task.error.domain, AWSSESErrorDomain);
+//        XCTAssertEqual(task.error.code, AWSSESErrorUnknown);
+//        XCTAssertTrue([@"InvalidParameterValue" isEqualToString:task.error.userInfo[@"Code"]]);
+//        XCTAssertTrue([@"Email address not specified." isEqualToString:task.error.userInfo[@"Message"]]);
+//        return nil;
+//    }] waitUntilFinished];
+//}
 
 @end
 
