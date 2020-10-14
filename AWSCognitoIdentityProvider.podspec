@@ -1,15 +1,15 @@
 Pod::Spec.new do |s|
-  s.name         = 'AWSCognitoIdentityProvider'
+  s.name         = 'SimpleAWSCognitoIdentityProvider'
   s.version      = '2.17.0'
-  s.summary      = 'Amazon Cognito Identity Provider SDK for iOS (Beta)'
+  s.summary      = 'Custom Amazon Cognito Identity Provider SDK for Simplehuman'
 
-  s.description  = 'Amazon Cognito Identity Provider enables sign up and authentication of your end users'
+  s.description  = 'Custom Amazon Cognito Identity Provider SDK for Simplehuman'
 
   s.homepage     = 'http://aws.amazon.com/mobile/sdk'
   s.license      = 'Apache License, Version 2.0'
   s.author       = { 'Amazon Web Services' => 'amazonwebservices' }
   s.platform     = :ios, '9.0'
-  s.source       = { :git => 'https://github.com/aws/aws-sdk-ios.git',
+  s.source       = { :git => 'https://github.com/simplehuman-engineering/aws-sdk-ios.git',
                      :tag => s.version}
   s.requires_arc = true
   s.frameworks   = 'Security', 'UIKit'
