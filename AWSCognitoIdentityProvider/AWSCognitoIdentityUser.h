@@ -128,6 +128,12 @@ NS_ASSUME_NONNULL_BEGIN
                                           clientMetaData:(nullable NSDictionary<NSString *, NSString*> *) clientMetaData
                                 isInitialCustomChallenge:(BOOL)isInitialCustomChallenge;
 
+- (AWSTask<AWSCognitoIdentityUserSession *> *)simpleGetSession:(NSString *)username
+                                                password:(NSString *)password
+                                          validationData:(nullable NSArray<AWSCognitoIdentityUserAttributeType *> *)validationData
+                                          clientMetaData:(nullable NSDictionary<NSString *, NSString*> *) clientMetaData
+                                isInitialCustomChallenge:(BOOL)isInitialCustomChallenge;
+
 /**
  Get details about this user, including user attributes
  */

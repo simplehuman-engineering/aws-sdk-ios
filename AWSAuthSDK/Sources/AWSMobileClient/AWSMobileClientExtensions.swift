@@ -234,6 +234,42 @@ extension AWSMobileClient {
         }
     }
     
+    public func simpleSignIn(username: String, completionHandler: @escaping ((SignInResult?, Error?) -> Void)) {
+        switch self.currentUserState {
+        case .signedIn:
+            completionHandler(nil, AWSMobileClientError.invalidState(message: "There is already a user which is signed in. Please log out the user before calling showSignIn."))
+            return
+        default:
+            break
+        }
+        self.userpoolOpsHelper.userpoolClient?.delegate = self.userpoolOpsHelper
+        self.userpoolOpsHelper.authHelperDelegate = self
+        let user = self.userPoolClient?.getUser(username)
+        self.userpoolOpsHelper.currentSignInHandlerCallback = completionHandler
+        
+        let randomGeneratedPassword = UUID().uuidString
+        userPassword = randomGeneratedPassword
+        user!.simpleGetSession(username,
+                         password: randomGeneratedPassword,
+                         validationData: nil,
+                         clientMetaData: [:],
+                         isInitialCustomChallenge: true).continueWith { (task) -> Any? in
+            if let error = task.error {
+                self.invokeSignInCallback(signResult: nil, error: AWSMobileClientError.makeMobileClientError(from: error))
+            } else if let result = task.result {
+                self.internalCredentialsProvider?.clearCredentials()
+                self.federationProvider = .userPools
+                self.performUserPoolSuccessfulSignInTasks(session: result)
+                let tokenString = result.idToken!.tokenString
+                self.mobileClientStatusChanged(userState: .signedIn,
+                                               additionalInfo: [self.ProviderKey:self.userPoolClient!.identityProviderName,
+                                                                self.TokenKey:tokenString])
+                self.invokeSignInCallback(signResult: SignInResult(signInState: .signedIn), error: nil)
+            }
+            return nil
+        }
+    }
+    
     /// Federates a social provider like Google, Facebook, Amazon or Twitter.
     /// If user is already signed in through the `signIn` method, it will return `AWSMobileClientError.federationProviderExists` error.
     /// If federation provider name has changed, previous federation provider's token will be erased and the new token will be used going forward; the user state is un-affected in that case.
