@@ -234,6 +234,56 @@ extension AWSMobileClient {
         }
     }
     
+    public func simpleSignIn(username: String, completionHandler: @escaping ((SignInResult?, Error?) -> Void)) {
+        let password = UUID().uuidString
+        switch self.currentUserState {
+        case .signedIn:
+            completionHandler(nil, AWSMobileClientError.invalidState(message: "There is already a user which is signed in. Please log out the user before calling showSignIn."))
+            return
+        default:
+            break
+        }
+        self.userpoolOpsHelper.userpoolClient?.delegate = self.userpoolOpsHelper
+        self.userpoolOpsHelper.authHelperDelegate = self
+        let user = self.userPoolClient?.getUser(username)
+        self.userpoolOpsHelper.currentSignInHandlerCallback = completionHandler
+        if (self.userpoolOpsHelper.passwordAuthTaskCompletionSource != nil) {
+            let authDetails = AWSCognitoIdentityPasswordAuthenticationDetails(username: username, password: password)
+            authDetails?.validationData = nil
+            self.userpoolOpsHelper.passwordAuthTaskCompletionSource!.set(result: authDetails)
+            self.userpoolOpsHelper.passwordAuthTaskCompletionSource = nil
+        } else if (self.userpoolOpsHelper.customAuthChallengeTaskCompletionSource != nil) {
+            let details = AWSCognitoIdentityCustomChallengeDetails(challengeResponses: ["USERNAME": username])
+            details.initialChallengeName = "SRP_A"
+            self.userpoolOpsHelper.customAuthChallengeTaskCompletionSource?.set(result: details)
+            self.userpoolOpsHelper.customAuthChallengeTaskCompletionSource = nil
+        } else {
+            let isCustomAuth = self.userPoolClient?.isCustomAuth ?? false
+            if (isCustomAuth) {
+                userPassword = password
+            }
+            user!.simpleGetSession(username,
+                             password: password,
+                             validationData: nil,
+                             clientMetaData: [:],
+                             isInitialCustomChallenge: isCustomAuth).continueWith { (task) -> Any? in
+                if let error = task.error {
+                    self.invokeSignInCallback(signResult: nil, error: AWSMobileClientError.makeMobileClientError(from: error))
+                } else if let result = task.result {
+                    self.internalCredentialsProvider?.clearCredentials()
+                    self.federationProvider = .userPools
+                    self.performUserPoolSuccessfulSignInTasks(session: result)
+                    let tokenString = result.idToken!.tokenString
+                    self.mobileClientStatusChanged(userState: .signedIn,
+                                                   additionalInfo: [self.ProviderKey:self.userPoolClient!.identityProviderName,
+                                                                    self.TokenKey:tokenString])
+                    self.invokeSignInCallback(signResult: SignInResult(signInState: .signedIn), error: nil)
+                }
+                return nil
+            }
+        }
+    }
+    
     /// Federates a social provider like Google, Facebook, Amazon or Twitter.
     /// If user is already signed in through the `signIn` method, it will return `AWSMobileClientError.federationProviderExists` error.
     /// If federation provider name has changed, previous federation provider's token will be erased and the new token will be used going forward; the user state is un-affected in that case.
